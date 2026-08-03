@@ -1,18 +1,23 @@
-from config import WATCH_KEYWORDS, IGNORE_KEYWORDS
+from models import Product
+from config import IGNORE_KEYWORDS, WATCH_KEYWORDS
 
 
-def should_notify(product):
+def contains_keyword(product_name: str, keywords: list[str]) -> bool:
+    normalized_name = product_name.casefold()
 
-    name = product.name.lower()
+    return any(
+        keyword.casefold() in normalized_name
+        for keyword in keywords
+    )
 
-    # Ignore unwanted products first
-    for keyword in IGNORE_KEYWORDS:
-        if keyword.lower() in name:
-            return False
 
-    # Notify only for watched keywords
-    for keyword in WATCH_KEYWORDS:
-        if keyword.lower() in name:
-            return True
+def should_notify(product: Product) -> bool:
+    """
+    Return True only when a product matches the collector watch list
+    and does not match an ignored category.
+    """
 
-    return False
+    if contains_keyword(product.name, IGNORE_KEYWORDS):
+        return False
+
+    return contains_keyword(product.name, WATCH_KEYWORDS)
