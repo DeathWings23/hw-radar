@@ -23,12 +23,7 @@ print(f"Found {len(new_products)} new products\n")
 
 # Notify only for products that match our watch list
 for product in new_products:
-
-    print(product.name)
-
-    if should_notify(product):
-        print("🚨 Sending Discord notification...")
-        send_discord_notification(product)
+    print(f"Adding existing product to baseline: {product.name}")
 
 # Save the updated database
 save_seen_products(seen_products)
