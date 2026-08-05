@@ -3,7 +3,8 @@ from datetime import UTC, datetime
 
 from core.filters import should_notify
 from notifications.discord import send_discord_notification
-from scrapers.smyk import get_products
+from scrapers.noriel import get_products as get_noriel_products
+from scrapers.smyk import get_products as get_smyk_products
 from storage.database import load_seen_products, save_seen_products
 
 
@@ -14,9 +15,15 @@ print(f"Started at: {datetime.now(UTC).isoformat()}")
 print("=" * 60)
 print()
 
-products = get_products()
+smyk_products = get_smyk_products()
+noriel_products = get_noriel_products()
 
-print(f"Found {len(products)} products")
+products = smyk_products + noriel_products
+
+print()
+print(f"Found {len(smyk_products)} SMYK products")
+print(f"Found {len(noriel_products)} Noriel products")
+print(f"Found {len(products)} products in total")
 
 seen_products = load_seen_products()
 new_products = []
@@ -35,7 +42,10 @@ ignored_count = 0
 # Notify only for products matching the collector watch list
 for product in new_products:
     if should_notify(product):
-        print(f"🚨 Collector item detected: {product.name}")
+        print(
+            f"🚨 Collector item detected: "
+            f"{product.store} | {product.name}"
+        )
 
         try:
             send_discord_notification(product)
@@ -45,10 +55,18 @@ for product in new_products:
             print(f"❌ Discord notification failed: {error}")
     else:
         ignored_count += 1
-        print(f"⏭️ Ignored: {product.name}")
+        print(f"⏭️ Ignored: {product.store} | {product.name}")
 
-print(f"\nNotifications sent: {notification_count}")
+print()
+print("=" * 60)
+print("📊 Scan Summary")
+print(f"SMYK products: {len(smyk_products)}")
+print(f"Noriel products: {len(noriel_products)}")
+print(f"Total products: {len(products)}")
+print(f"New products: {len(new_products)}")
+print(f"Notifications sent: {notification_count}")
 print(f"Products ignored: {ignored_count}")
+print("=" * 60)
 
 # Save every seen URL, including ignored products
 save_seen_products(seen_products)
