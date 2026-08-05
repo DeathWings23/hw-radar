@@ -1,10 +1,18 @@
+import os
+from datetime import UTC, datetime
+
 from core.filters import should_notify
 from notifications.discord import send_discord_notification
 from scrapers.smyk import get_products
 from storage.database import load_seen_products, save_seen_products
 
 
-print("🚗 HW Radar Starting...\n")
+print("=" * 60)
+print("🚗 HW Radar Starting...")
+print(f"Triggered by: {os.getenv('GITHUB_EVENT_NAME', 'local')}")
+print(f"Started at: {datetime.now(UTC).isoformat()}")
+print("=" * 60)
+print()
 
 products = get_products()
 

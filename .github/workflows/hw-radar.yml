@@ -33,6 +33,7 @@ jobs:
       - name: Run HW Radar
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: python main.py
 
       - name: Save updated product database
