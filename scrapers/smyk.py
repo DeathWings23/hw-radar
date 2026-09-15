@@ -4,10 +4,19 @@ from bs4 import BeautifulSoup
 from models import Product
 
 
-BASE_URL = "https://www.smyk.com/ro/ro/brand/hot-wheels"
+SMYK_SOURCES = [
+    {
+        "name": "Hot Wheels",
+        "url": "https://www.smyk.com/ro/ro/brand/hot-wheels",
+    },
+    {
+        "name": "Pokemon",
+        "url": "https://www.smyk.com/ro/ro/personaj/pokemon",
+    },
+]
 
 
-def get_products() -> list[Product]:
+def scrape_source(source_name: str, base_url: str) -> list[Product]:
     all_products = []
     seen_urls = set()
     page_number = 1
@@ -17,9 +26,12 @@ def get_products() -> list[Product]:
     }
 
     while True:
-        page_url = f"{BASE_URL}?p={page_number}"
+        page_url = f"{base_url}?p={page_number}"
 
-        print(f"Checking SMYK page {page_number}...")
+        print(
+            f"Checking SMYK {source_name} "
+            f"page {page_number}..."
+        )
 
         response = requests.get(
             page_url,
@@ -43,16 +55,21 @@ def get_products() -> list[Product]:
                 "div",
                 class_="complex-product__name",
             )
+
             price = card.find(
                 "span",
                 class_="price--new",
             )
+
             link = card.get("href")
 
             if not name or not price or not link:
                 continue
 
-            full_url = "https://www.smyk.com" + link
+            if link.startswith("http"):
+                full_url = link
+            else:
+                full_url = "https://www.smyk.com" + link
 
             if full_url in seen_urls:
                 continue
@@ -68,12 +85,46 @@ def get_products() -> list[Product]:
             seen_urls.add(full_url)
 
         if not page_products:
-            print(f"No new products found on page {page_number}. Stopping.")
+            print(
+                f"No new SMYK {source_name} products "
+                f"found on page {page_number}. Stopping."
+            )
             break
 
-        print(f"Found {len(page_products)} products on page {page_number}.")
+        print(
+            f"Found {len(page_products)} SMYK "
+            f"{source_name} products on page {page_number}."
+        )
 
         all_products.extend(page_products)
         page_number += 1
+
+    print(
+        f"Found {len(all_products)} SMYK "
+        f"{source_name} products in total."
+    )
+
+    return all_products
+
+
+def get_products() -> list[Product]:
+    all_products = []
+    global_seen_urls = set()
+
+    for source in SMYK_SOURCES:
+        products = scrape_source(
+            source["name"],
+            source["url"],
+        )
+
+        for product in products:
+            if product.url not in global_seen_urls:
+                all_products.append(product)
+                global_seen_urls.add(product.url)
+
+    print(
+        f"Found {len(all_products)} SMYK products "
+        f"across all monitored categories."
+    )
 
     return all_products
